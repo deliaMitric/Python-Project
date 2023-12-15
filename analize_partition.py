@@ -32,8 +32,11 @@ def analize(partition):
                     #iar size ul fisierului ca valoare la aceasta cheie; daca extensia se gaseste in dictionar ca si cheie,
                     #vom adauga doar size-ul fisierului la lista de valori
                     for file in files:
+                        #Construim path ul fisierului pentru a folosi functioa getsize
                         file_path = os.path.join(current_dir, file)
                         file_size = os.path.getsize(file_path)
+
+                        #Extragem extensia fisierului
                         file_ext = os.path.splitext(file)
 
                         if file_ext not in extensions:
@@ -41,6 +44,7 @@ def analize(partition):
                         else:
                             extensions[file_ext].append(file_size)
 
+            #Daca vreun director e inaccesibil, lasam utilizatorul sa aleaga daca, continuam sau nu
             except PermissionError as p:
                 print(f"Directorul {current_dir} nu este accesibil.\nDoriti sa continuam prin excluderea acestuia? y/n\n")
                 response = input()
