@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plot
 import os
 import sys
+import re
 def build_partition_path(partition):
     #Windows
     if sys.platform == "win64" or sys.platform == "win32":
@@ -32,17 +33,30 @@ def analize(partition):
                     #iar size ul fisierului ca valoare la aceasta cheie; daca extensia se gaseste in dictionar ca si cheie,
                     #vom adauga doar size-ul fisierului la lista de valori
                     for file in files:
-                        #Construim path ul fisierului pentru a folosi functioa getsize
+                        #Construim path ul fisierului pentru a folosi functia getsize
                         file_path = os.path.join(current_dir, file)
                         file_size = os.path.getsize(file_path)
 
                         #Extragem extensia fisierului
-                        file_ext = os.path.splitext(file)
+                        file_ext = os.path.splitext(file)[1]
 
-                        if file_ext not in extensions:
-                            extensions[file_ext] = [file_size]
+                        #verificam daca fisierul nu e standard, adica contine o insiruire de valori precum version=.., culture-.. etc.
+                        if "," in file_ext and "." in file_ext:
+                            if "non_standard" not in extensions:
+                                extensions["non_standard"] = [file_size]
+                            else:
+                                extensions["non_standard"].append(file_size)
+
+                        elif file_ext[1:].isdigit():
+                            if "number" not in extensions:
+                                extensions["number"] = [file_size]
+                            else:
+                                extensions["number"].append(file_size)
                         else:
-                            extensions[file_ext].append(file_size)
+                            if file_ext not in extensions:
+                                extensions[file_ext] = [file_size]
+                            else:
+                                extensions[file_ext].append(file_size)
 
             #Daca vreun director e inaccesibil, lasam utilizatorul sa aleaga daca, continuam sau nu
             except PermissionError as p:
@@ -52,6 +66,8 @@ def analize(partition):
                     pass
                 else:
                     raise SystemExit
+            except Exception as e:
+                print(e)
 
     #Cazul in care partitia nu e accesibila
     except PermissionError as p:
@@ -65,9 +81,16 @@ def analize(partition):
         else:
             print("Eroare!")
         raise SystemExit
-    finally:
+    else:
         print(f"numar dir: {number_of_dirs}")
         print(f"numar files: {number_of_files}")
+        print(f"numar extensii: {len(extensions)}")
+
+        print("Extensiile si size urile:")
+        for ext in extensions:
+            print(f"{ext} : {len(extensions[ext])}")
+    #finally:
+
 
 
 
