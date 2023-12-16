@@ -9,6 +9,19 @@ def build_partition_path(partition):
     print(partition_path)
     return partition_path
 
+def make_barplot_number(extensions, number_files):
+    #Deoarece in extensions sunt extensii ce corespund la foarte putine fisiere
+    #vom lua in considerare doar procentele >= 0.35 pentru a nu incarca diagrama
+    new_extensions = [ext for ext in extensions if ((len(extensions[ext]) / number_files) * 100) >= 0.35]
+    percents_number = [((len(extensions[ext]) / number_files) * 100) for ext in new_extensions]
+
+    #Ajustam dimensiunea imaginii
+    plot.figure(figsize=(25, 8))
+
+    #Realizarea barplotului
+    plot.bar(new_extensions, percents_number, color='green')
+    plot.xticks(rotation=45, ha='right')
+    plot.show()
 
 def analize(partition):
     number_of_files = 0
@@ -46,12 +59,20 @@ def analize(partition):
                                 extensions["non_standard"] = [file_size]
                             else:
                                 extensions["non_standard"].append(file_size)
-
+                        # verificam daca extensia e un numar
                         elif file_ext[1:].isdigit():
                             if "number" not in extensions:
                                 extensions["number"] = [file_size]
                             else:
                                 extensions["number"].append(file_size)
+
+                        # verificam daca fisierul nu are extensie
+                        elif file_ext == "":
+                            if "no_ext" not in extensions:
+                                extensions["no_ext"] = [file_size]
+                            else:
+                                extensions["no_ext"].append(file_size)
+
                         else:
                             if file_ext not in extensions:
                                 extensions[file_ext] = [file_size]
@@ -86,10 +107,11 @@ def analize(partition):
         print(f"numar files: {number_of_files}")
         print(f"numar extensii: {len(extensions)}")
 
-        print("Extensiile si size urile:")
-        for ext in extensions:
-            print(f"{ext} : {len(extensions[ext])}")
-    #finally:
+        # print("Extensiile si size urile:")
+        # for ext in extensions:
+        #     print(f"{ext} : {len(extensions[ext])}")
+
+        make_barplot_number(extensions, number_of_files)
 
 
 
