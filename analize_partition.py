@@ -9,21 +9,39 @@ def build_partition_path(partition):
     print(partition_path)
     return partition_path
 
-def make_barplot_number(extensions, number_files):
+def make_plots_number_size(extensions, number_files):
     #Deoarece in extensions sunt extensii ce corespund la foarte putine fisiere
     #vom lua in considerare doar procentele >= 0.35 pentru a nu incarca diagrama
     new_extensions = [ext for ext in extensions if ((len(extensions[ext]) / number_files) * 100) >= 0.35]
     percents_number = [((len(extensions[ext]) / number_files) * 100) for ext in new_extensions]
 
-    #Ajustam dimensiunea imaginii
-    plot.figure(figsize=(25, 8))
+    figure1, ax1 = plot.subplots(figsize=(25, 8))
 
     #Realizarea barplotului
-    plot.bar(new_extensions, percents_number, color='green')
-    plot.xticks(rotation=45, ha='right')
+    ax1.bar(new_extensions, percents_number, color='green')
+    ax1.set_xticks(range(len(new_extensions)))
+    ax1.set_xticklabels(new_extensions, rotation=45, ha='right')
+    ax1.set_xlabel("Extensii:")
+    ax1.set_ylabel("Procente:")
+    ax1.set_title("Proportia ficarui tip ca numar:")
+
+    sizes = [sum(extensions[ext]) for ext in extensions]
+    total_size = sum(sizes)
+
+    new_extensions = [ext for ext in extensions if ((sum(extensions[ext]) / total_size) * 100) >= 1]
+    percents_size = [((sum(extensions[ext]) / total_size) * 100) for ext in new_extensions]
+
+    figure, ax2 = plot.subplots(figsize=(25, 8))
+
+    # Realizarea pieplotului
+    ax2.pie(percents_size, labels=new_extensions, autopct="%1.1f%%", startangle=90)
+    ax2.axis("equal")
+    ax2.set_title("Proportia ficarui tip ca size:")
+
     plot.show()
 
-def analize(partition):
+
+def analyze(partition):
     number_of_files = 0
     number_of_dirs = 0
     extensions = {}
@@ -74,6 +92,7 @@ def analize(partition):
                                 extensions["no_ext"].append(file_size)
 
                         else:
+                            file_ext = file_ext.lower()
                             if file_ext not in extensions:
                                 extensions[file_ext] = [file_size]
                             else:
@@ -81,14 +100,20 @@ def analize(partition):
 
             #Daca vreun director e inaccesibil, lasam utilizatorul sa aleaga daca, continuam sau nu
             except PermissionError as p:
-                print(f"Directorul {current_dir} nu este accesibil.\nDoriti sa continuam prin excluderea acestuia? y/n\n")
+                print(f"Directorul {current_dir} nu este accesibil.\nDoriti sa continuam prin excluderea acestuia? y/n")
                 response = input()
                 if response == "y" or response == "Y":
                     pass
                 else:
                     raise SystemExit
             except Exception as e:
-                print(e)
+                print(
+                    f"Am intampinat o eroare l deschiderea de director/fisier.\nDoriti sa continuam? y/n")
+                response = input()
+                if response == "y" or response == "Y":
+                    pass
+                else:
+                    raise SystemExit
 
     #Cazul in care partitia nu e accesibila
     except PermissionError as p:
@@ -107,13 +132,7 @@ def analize(partition):
         print(f"numar files: {number_of_files}")
         print(f"numar extensii: {len(extensions)}")
 
-        # print("Extensiile si size urile:")
-        # for ext in extensions:
-        #     print(f"{ext} : {len(extensions[ext])}")
-
-        make_barplot_number(extensions, number_of_files)
-
-
+        make_plots_number_size(extensions, number_of_files)
 
 
 if __name__ == '__main__':
@@ -121,6 +140,6 @@ if __name__ == '__main__':
             print("Prea putine argumente la linia de comanda!")
         elif len(sys.argv) == 2:
             partition = sys.argv[1]
-            analize(partition)
+            analyze(partition)
         else:
             print("Prea multe argumente la linia de comanda!")
