@@ -3,9 +3,15 @@ import os
 import sys
 import re
 def build_partition_path(partition):
-    #Windows
+    partition_path = ""
+    #Windows: primim o litera -> litera:\
     if sys.platform == "win64" or sys.platform == "win32":
         partition_path = partition + ":\\"
+
+    #Linux: primim un sir (ex: sda1) -> \dev\sda1
+    if sys.platform == "linux":
+        partition_path = "/dev/" + partition
+
     print(partition_path)
     return partition_path
 
@@ -17,7 +23,7 @@ def make_plots_number_size(extensions, number_files):
 
     figure1, ax1 = plot.subplots(figsize=(25, 8))
 
-    #Realizarea barplotului
+    #Realizarea bar chart ului
     ax1.bar(new_extensions, percents_number, color='green')
     ax1.set_xticks(range(len(new_extensions)))
     ax1.set_xticklabels(new_extensions, rotation=45, ha='right')
@@ -33,7 +39,7 @@ def make_plots_number_size(extensions, number_files):
 
     figure, ax2 = plot.subplots(figsize=(25, 8))
 
-    # Realizarea pieplotului
+    # Realizarea pie chart ului
     ax2.pie(percents_size, labels=new_extensions, autopct="%1.1f%%", startangle=90)
     ax2.axis("equal")
     ax2.set_title("Proportia ficarui tip ca size:")
@@ -92,7 +98,9 @@ def analyze(partition):
                                 extensions["no_ext"].append(file_size)
 
                         else:
-                            file_ext = file_ext.lower()
+                            if sys.platform == "win64" or sys.platform == "win32":
+                                file_ext = file_ext.lower()
+
                             if file_ext not in extensions:
                                 extensions[file_ext] = [file_size]
                             else:
@@ -125,7 +133,7 @@ def analyze(partition):
         if len(e.args) > 0:
             print(e.args[0])
         else:
-            print("Eroare!")
+            print(f"Eroare: {e}")
         raise SystemExit
     else:
         print(f"numar dir: {number_of_dirs}")
