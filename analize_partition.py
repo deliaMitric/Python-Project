@@ -22,32 +22,47 @@ def build_partition_path(partition):
 
 def make_plots_number_size(extensions, number_files, percentage_number_limit, percentage_size_limit):
     try:
+        # -----------------------------------DUPA NUMAR----------------------------------
         # Deoarece in extensions sunt extensii ce corespund la foarte putine fisiere
-        # vom lua in considerare doar procentele > <cu o limita>(percentage_number_limit) pentru a nu incarca diagrama
-        new_extensions = [ext for ext in extensions if ((len(extensions[ext]) / number_files) * 100) > percentage_number_limit]
-        percents_number = [((len(extensions[ext]) / number_files) * 100) for ext in new_extensions]
+        # vom lua in considerare doar procentele > <limita>(percentage_number_limit) pentru a nu incarca diagrama
+        new_extensions1 = [ext for ext in extensions if ((len(extensions[ext]) / number_files) * 100) > percentage_number_limit]
+        percents_number = [((len(extensions[ext]) / number_files) * 100) for ext in new_extensions1]
+
+        #Tipurile de fisiere pentru care procentul e <= <limita> vor fi clasificate la un loc, cu eticheta "others"
+        small_percents1 = [((len(extensions[ext]) / number_files) * 100) for ext in extensions if ((len(extensions[ext]) / number_files) * 100) <= percentage_number_limit]
+        small_percents_sum1 = sum(small_percents1)
+
+        percents_number.append(small_percents_sum1)
+        new_extensions1.append("others")
 
         figure1, ax1 = plot.subplots(figsize=(25, 8))
 
         #Realizarea bar chart ului
-        ax1.bar(new_extensions, percents_number, color='green')
-        ax1.set_xticks(range(len(new_extensions)))
-        ax1.set_xticklabels(new_extensions, rotation=45, ha='right')
+        ax1.bar(new_extensions1, percents_number, color='green')
+        ax1.set_xticks(range(len(new_extensions1)))
+        ax1.set_xticklabels(new_extensions1, rotation=45, ha='right')
         ax1.set_xlabel("Extensii:")
         ax1.set_ylabel("Procente:")
         ax1.set_title("Proporția fiecărui tip ca numar:")
 
+        # -----------------------------------DUPA SIZE----------------------------------
         sizes = [sum(extensions[ext]) for ext in extensions]
         total_size = sum(sizes)
 
+        new_extensions2 = [ext for ext in extensions if ((sum(extensions[ext]) / total_size) * 100) > percentage_size_limit]
+        percents_size = [((sum(extensions[ext]) / total_size) * 100) for ext in new_extensions2]
 
-        new_extensions = [ext for ext in extensions if ((sum(extensions[ext]) / total_size) * 100) > percentage_size_limit]
-        percents_size = [((sum(extensions[ext]) / total_size) * 100) for ext in new_extensions]
+        # Tipurile de fisiere pentru care procentul e <= <limita> vor fi clasificate la un loc cu eticheta "others"
+        small_percents2 = [((sum(extensions[ext]) / total_size) * 100) for ext in extensions if ((sum(extensions[ext]) / total_size) * 100) <= percentage_size_limit]
+        small_percents_sum2 = sum(small_percents2)
+
+        percents_size.append(small_percents_sum2)
+        new_extensions2.append("others")
 
         figure, ax2 = plot.subplots(figsize=(25, 8))
 
         # Realizarea pie chart ului
-        ax2.pie(percents_size, labels=new_extensions, autopct="%1.1f%%", startangle=90)
+        ax2.pie(percents_size, labels=new_extensions2, autopct="%1.1f%%", startangle=0)
         ax2.axis("equal")
         ax2.set_title("Proporția fiecărui tip ca size:")
 
@@ -55,6 +70,8 @@ def make_plots_number_size(extensions, number_files, percentage_number_limit, pe
 
     except ZeroDivisionError as e:
         print("Partitia nu contine fisiere.")
+    except Exception as e:
+        print(e);
 
 #Parcurgerea recursiva a partitiei-----------------------------------------------------
 def analyze_rec(partition, percentage_number_limit, percentage_size_limit):
@@ -267,7 +284,7 @@ if __name__ == '__main__':
                     analyze_rec(partition, 0.35, 1)
                     break
                 elif response.lower() == "n":
-                    analyze_first_level(partition, 0.1, 0)
+                    analyze_first_level(partition, 0.1, 0.1)
                     break
                 else:
                     print("Va rog introduceti  R  pentru parcurgere RECURSIV sau  N  pentru parcurgerea PRIMUL NIVEL")
