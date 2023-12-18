@@ -20,11 +20,11 @@ def build_partition_path(partition):
     print(partition_path)
     return partition_path
 
-def make_plots_number_size(extensions, number_files):
+def make_plots_number_size(extensions, number_files, percentage_number_limit, percentage_size_limit):
     try:
         # Deoarece in extensions sunt extensii ce corespund la foarte putine fisiere
-        # vom lua in considerare doar procentele >= 0.35 pentru a nu incarca diagrama
-        new_extensions = [ext for ext in extensions if ((len(extensions[ext]) / number_files) * 100) >= 0.35]
+        # vom lua in considerare doar procentele > <cu o limita>(percentage_number_limit) pentru a nu incarca diagrama
+        new_extensions = [ext for ext in extensions if ((len(extensions[ext]) / number_files) * 100) > percentage_number_limit]
         percents_number = [((len(extensions[ext]) / number_files) * 100) for ext in new_extensions]
 
         figure1, ax1 = plot.subplots(figsize=(25, 8))
@@ -35,13 +35,13 @@ def make_plots_number_size(extensions, number_files):
         ax1.set_xticklabels(new_extensions, rotation=45, ha='right')
         ax1.set_xlabel("Extensii:")
         ax1.set_ylabel("Procente:")
-        ax1.set_title("Proportia fiecarui tip ca numar:")
+        ax1.set_title("Proporția fiecărui tip ca numar:")
 
         sizes = [sum(extensions[ext]) for ext in extensions]
         total_size = sum(sizes)
 
 
-        new_extensions = [ext for ext in extensions if ((sum(extensions[ext]) / total_size) * 100) >= 1]
+        new_extensions = [ext for ext in extensions if ((sum(extensions[ext]) / total_size) * 100) > percentage_size_limit]
         percents_size = [((sum(extensions[ext]) / total_size) * 100) for ext in new_extensions]
 
         figure, ax2 = plot.subplots(figsize=(25, 8))
@@ -49,7 +49,7 @@ def make_plots_number_size(extensions, number_files):
         # Realizarea pie chart ului
         ax2.pie(percents_size, labels=new_extensions, autopct="%1.1f%%", startangle=90)
         ax2.axis("equal")
-        ax2.set_title("Proportia fiecarui tip ca size:")
+        ax2.set_title("Proporția fiecărui tip ca size:")
 
         plot.show()
 
@@ -57,7 +57,7 @@ def make_plots_number_size(extensions, number_files):
         print("Partitia nu contine fisiere.")
 
 #Parcurgerea recursiva a partitiei-----------------------------------------------------
-def analyze_rec(partition):
+def analyze_rec(partition, percentage_number_limit, percentage_size_limit):
     number_of_files = 0
     number_of_dirs = 0
     extensions = {}
@@ -88,11 +88,12 @@ def analyze_rec(partition):
                         file_ext = os.path.splitext(file)[1]
 
                         #verificam daca fisierul nu e standard, adica contine o insiruire de valori precum version=.., culture-.. etc.
-                        if "," in file_ext and "." in file_ext:
+                        if "," in file_ext and " " in file_ext:
                             if "non_standard" not in extensions:
                                 extensions["non_standard"] = [file_size]
                             else:
                                 extensions["non_standard"].append(file_size)
+
                         # verificam daca extensia e un numar
                         elif file_ext[1:].isdigit():
                             if "number" not in extensions:
@@ -108,7 +109,7 @@ def analyze_rec(partition):
                                 extensions["no_ext"].append(file_size)
 
                         else:
-                            if sys.platform == "win64" or sys.platform == "win32":
+                            if sys.platform.startswith("win"):
                                 file_ext = file_ext.lower()
 
                             if file_ext not in extensions:
@@ -150,11 +151,11 @@ def analyze_rec(partition):
         print(f"Numar files: {number_of_files}")
         print(f"Numar extensii: {len(extensions)}")
 
-        make_plots_number_size(extensions, number_of_files)
+        make_plots_number_size(extensions, number_of_files, percentage_number_limit, percentage_size_limit)
 
 
 #Parcurgerea doar a primului nivel-----------------------------------------------------
-def analyze_first_level(partition):
+def analyze_first_level(partition, percentage_number_limit, percentage_size_limit):
     number_of_files = 0
     number_of_dirs = 0
     extensions = {}
@@ -168,27 +169,28 @@ def analyze_first_level(partition):
         if os.access(partition_path, os.R_OK):
             try:
                 for element in tqdm(os.listdir(partition_path), desc="Progress"):
-
-                    #construimk path-ul elementului
+                    #construim path-ul elementului
                     elem_path = os.path.join(partition_path, element)
 
                     #verificam daca emlement este file sau director
                     if os.path.isdir(elem_path):
-                        number_of_dirs +=1
+                        number_of_dirs += 1
+
 
                     elif os.path.isfile(elem_path):
-                        number_of_files +=1
+                        number_of_files += 1
                         file_size = os.path.getsize(elem_path)
 
                         #Extragem extensia fisierului
                         file_ext = os.path.splitext(element)[1]
 
                         #verificam daca fisierul nu e standard, adica contine o insiruire de valori precum version=.., culture-.. etc.
-                        if "," in file_ext and "." in file_ext:
+                        if "," in file_ext and " " in file_ext:
                             if "non_standard" not in extensions:
                                 extensions["non_standard"] = [file_size]
                             else:
                                 extensions["non_standard"].append(file_size)
+
                         # verificam daca extensia e un numar
                         elif file_ext[1:].isdigit():
                             if "number" not in extensions:
@@ -204,7 +206,7 @@ def analyze_first_level(partition):
                                 extensions["no_ext"].append(file_size)
 
                         else:
-                            if sys.platform == "win64" or sys.platform == "win32":
+                            if sys.platform.startswith("win"):
                                 file_ext = file_ext.lower()
 
                             if file_ext not in extensions:
@@ -214,7 +216,7 @@ def analyze_first_level(partition):
 
             #Daca vreun director e inaccesibil, lasam utilizatorul sa aleaga daca, continuam sau nu
             except PermissionError as p:
-                print(f"Un fisier sau un director din partitia {partition}nu este accesibil.\nDoriti sa continuam prin excluderea acestuia? y/n")
+                print(f"Un fisier sau un director din partitia {partition} nu este accesibil.\nDoriti sa continuam prin excluderea acestuia? y/n")
                 response = input()
                 if response == "y" or response == "Y":
                     pass
@@ -246,7 +248,10 @@ def analyze_first_level(partition):
         print(f"Numar files: {number_of_files}")
         print(f"Numar extensii: {len(extensions)}")
 
-        make_plots_number_size(extensions, number_of_files)
+        for ext in extensions:
+            print(f"{ext}: {extensions[ext]}")
+
+        make_plots_number_size(extensions, number_of_files, percentage_number_limit, percentage_size_limit)
 
 if __name__ == '__main__':
         if len(sys.argv) != 2:
@@ -259,10 +264,10 @@ if __name__ == '__main__':
             while True:
                 response = input()
                 if response.lower() == "r":
-                    analyze_rec(partition)
+                    analyze_rec(partition, 0.35, 1)
                     break
                 elif response.lower() == "n":
-                    analyze_first_level(partition)
+                    analyze_first_level(partition, 0.1, 0)
                     break
                 else:
                     print("Va rog introduceti  R  pentru parcurgere RECURSIV sau  N  pentru parcurgerea PRIMUL NIVEL")
