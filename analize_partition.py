@@ -29,7 +29,7 @@ def make_plots_number_size(extensions, number_files):
     ax1.set_xticklabels(new_extensions, rotation=45, ha='right')
     ax1.set_xlabel("Extensii:")
     ax1.set_ylabel("Procente:")
-    ax1.set_title("Proportia ficarui tip ca numar:")
+    ax1.set_title("Proportia fiecarui tip ca numar:")
 
     sizes = [sum(extensions[ext]) for ext in extensions]
     total_size = sum(sizes)
@@ -42,7 +42,7 @@ def make_plots_number_size(extensions, number_files):
     # Realizarea pie chart ului
     ax2.pie(percents_size, labels=new_extensions, autopct="%1.1f%%", startangle=90)
     ax2.axis("equal")
-    ax2.set_title("Proportia ficarui tip ca size:")
+    ax2.set_title("Proportia fiecarui tip ca size:")
 
     plot.show()
 
