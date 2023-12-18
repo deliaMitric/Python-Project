@@ -5,13 +5,17 @@ from tqdm import tqdm
 
 def build_partition_path(partition):
     partition_path = ""
+    separator = os.path.sep
+
     #Windows: primim o litera -> litera:\
-    if sys.platform == "win64" or sys.platform == "win32":
-        partition_path = partition + ":\\"
+    if sys.platform.startswith("win"):
+        partition_path = os.path.join(partition + ":", separator)
 
     #Linux: primim un sir (ex: sda1) -> \dev\sda1
-    if sys.platform == "linux":
-        partition_path = "/dev/" + partition
+    elif sys.platform == "linux":
+        partition_path = os.path.join(separator + "dev", partition)
+    else:
+        print("Platforma nu este suportata!")
 
     print(partition_path)
     return partition_path
