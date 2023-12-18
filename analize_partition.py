@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plot
 import os
 import sys
-import re
+from tqdm import tqdm
+
 def build_partition_path(partition):
     partition_path = ""
     #Windows: primim o litera -> litera:\
@@ -46,8 +47,8 @@ def make_plots_number_size(extensions, number_files):
 
     plot.show()
 
-
-def analyze(partition):
+#Parcurgerea recursiva a partitiei-----------------------------------------------------
+def analyze_rec(partition):
     number_of_files = 0
     number_of_dirs = 0
     extensions = {}
@@ -60,7 +61,7 @@ def analyze(partition):
 
         if os.access(partition_path, os.R_OK):
             try:
-                for current_dir, sub_dirs, files in os.walk(partition_path):
+                for current_dir, sub_dirs, files in tqdm(os.walk(partition_path), desc="Progress"):
 
                     #crestem numarul de directoare si de fisiere
                     number_of_dirs += 1;
@@ -116,7 +117,7 @@ def analyze(partition):
                     raise SystemExit
             except Exception as e:
                 print(
-                    f"Am intampinat o eroare l deschiderea de director/fisier.\nDoriti sa continuam? y/n")
+                    f"Am intampinat o eroare la deschiderea de director/fisier.\nDoriti sa continuam? y/n")
                 response = input()
                 if response == "y" or response == "Y":
                     pass
@@ -136,18 +137,32 @@ def analyze(partition):
             print(f"Eroare: {e}")
         raise SystemExit
     else:
-        print(f"numar dir: {number_of_dirs}")
-        print(f"numar files: {number_of_files}")
-        print(f"numar extensii: {len(extensions)}")
+        print(f"Numar dir: {number_of_dirs}")
+        print(f"Numar files: {number_of_files}")
+        print(f"Numar extensii: {len(extensions)}")
 
         make_plots_number_size(extensions, number_of_files)
 
 
+#Parcurgerea doar a primului nivel-----------------------------------------------------
+
+
 if __name__ == '__main__':
-        if len(sys.argv) < 2:
-            print("Prea putine argumente la linia de comanda!")
-        elif len(sys.argv) == 2:
-            partition = sys.argv[1]
-            analyze(partition)
+        if len(sys.argv) != 2:
+            print("Numarul incorect de argumente!\nVa rog introduceti comanda sub forma: python.exe <nume_fisier.py> <nume_partitie>\n")
+
         else:
-            print("Prea multe argumente la linia de comanda!")
+            partition = sys.argv[1]
+
+            print("Cum doriti sa parcurgem partitia?\nRECURSIV (tastati:  R)\nPRIMUL NIVEL (tastati:  N)")
+            while True:
+                response = input()
+                if response.lower() == "r":
+                    analyze_rec(partition)
+                    break
+                elif response.lower() == "n":
+                    #analyze_first_level(partition)
+                    break
+                else:
+                    print("Va rog introduceti  R  pentru parcurgere RECURSIV sau  N  pentru parcurgerea PRIMUL NIVEL")
+
