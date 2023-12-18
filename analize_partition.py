@@ -14,13 +14,14 @@ def build_partition_path(partition):
     #Linux: primim un sir (ex: sda1) -> \dev\sda1
     elif sys.platform == "linux":
         partition_path = os.path.join(separator + "dev", partition)
+    #In cazul in care platforma e diferita, treuie specificata path ul complet
     else:
-        print("Platforma nu este suportata!")
+        partition_path = partition
 
     print(partition_path)
     return partition_path
 
-def make_plots_number_size(extensions, number_files, percentage_number_limit, percentage_size_limit):
+def make_plots_number_size(extensions, number_files, percentage_number_limit, percentage_size_limit, is_recursive):
     try:
         # -----------------------------------DUPA NUMAR----------------------------------
         # Deoarece in extensions sunt extensii ce corespund la foarte putine fisiere
@@ -62,7 +63,10 @@ def make_plots_number_size(extensions, number_files, percentage_number_limit, pe
         figure, ax2 = plot.subplots(figsize=(25, 8))
 
         # Realizarea pie chart ului
-        ax2.pie(percents_size, labels=new_extensions2, autopct="%1.1f%%", startangle=0)
+        if not is_recursive:
+            ax2.pie(percents_size, labels=new_extensions2, autopct="%1.11f%%", startangle=90)
+        else:
+            ax2.pie(percents_size, labels=new_extensions2, autopct="%1.1f%%", startangle=90)
         ax2.axis("equal")
         ax2.set_title("Proporția fiecărui tip ca size:")
 
@@ -168,7 +172,7 @@ def analyze_rec(partition, percentage_number_limit, percentage_size_limit):
         print(f"Numar files: {number_of_files}")
         print(f"Numar extensii: {len(extensions)}")
 
-        make_plots_number_size(extensions, number_of_files, percentage_number_limit, percentage_size_limit)
+        make_plots_number_size(extensions, number_of_files, percentage_number_limit, percentage_size_limit, True)
 
 
 #Parcurgerea doar a primului nivel-----------------------------------------------------
@@ -193,12 +197,11 @@ def analyze_first_level(partition, percentage_number_limit, percentage_size_limi
                     if os.path.isdir(elem_path):
                         number_of_dirs += 1
 
-
                     elif os.path.isfile(elem_path):
                         number_of_files += 1
                         file_size = os.path.getsize(elem_path)
 
-                        #Extragem extensia fisierului
+                        # Extragem extensia fisierului
                         file_ext = os.path.splitext(element)[1]
 
                         #verificam daca fisierul nu e standard, adica contine o insiruire de valori precum version=.., culture-.. etc.
@@ -268,11 +271,12 @@ def analyze_first_level(partition, percentage_number_limit, percentage_size_limi
         for ext in extensions:
             print(f"{ext}: {extensions[ext]}")
 
-        make_plots_number_size(extensions, number_of_files, percentage_number_limit, percentage_size_limit)
+        make_plots_number_size(extensions, number_of_files, percentage_number_limit, percentage_size_limit, False)
+
 
 if __name__ == '__main__':
         if len(sys.argv) != 2:
-            print("Numarul incorect de argumente!\nVa rog introduceti comanda sub forma: python.exe <nume_fisier.py> <nume_partitie>\n")
+            print("Numarul incorect de argumente!\nVa rog introduceti comanda sub forma: python.exe analize_partition.py <nume_partitie> pentru S.O. Windows/Linux.\nVa rog introduceti comanda sub forma: python.exe analize_partition.py <path_partitie> pentru alte S.O.")
 
         else:
             partition = sys.argv[1]
